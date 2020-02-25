@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import {Ndef, NFC} from '@ionic-native/nfc/ngx';
+import {AlertController} from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -8,17 +9,20 @@ import {Ndef, NFC} from '@ionic-native/nfc/ngx';
 })
 export class HomePage {
 
-  constructor(private nfc: NFC, private ndef: Ndef) { }
+  constructor(private nfc: NFC, private ndef: Ndef, private alertController: AlertController) { }
 
-  leggiNFC() {
+  readNFC() {
     this.nfc.addNdefListener(() => {
-      console.log('successfully attached ndef listener');
+      this.presentAlert('ok');
     }, (err) => {
-      console.log('error attaching ndef listener', err);
+      this.presentAlert('ko' + err);
     }).subscribe((event) => {
-      console.log('received ndef message. the tag contains: ', event.tag);
-      console.log('decoded tag id', this.nfc.bytesToHexString(event.tag.id));
+      console.log(event);
+      console.log(JSON.stringify(event));
+
+      this.presentAlert('Il messaggio contiene' + event.tag + ' ' + this.nfc.bytesToHexString(event.tag.id));
     });
+
   }
 
 
@@ -28,16 +32,27 @@ export class HomePage {
       const message = this.ndef.textRecord('Hello world');
       this.nfc.share([message]).then(
           value => {
-
+            this.presentAlert('ok');
           }
       ).catch(
           reason => {
-            console.log(reason);
+            this.presentAlert('ko');
           }
       );
     }, (err) => {
-      console.log('error attaching ndef listener', err);
+      this.presentAlert('ko' + err);
     });
 
+  }
+
+
+  async presentAlert(mess) {
+    const alert = await this.alertController.create({
+      header: 'attenzione',
+      message: mess,
+      buttons: ['OK']
+    });
+
+    await alert.present();
   }
 }
